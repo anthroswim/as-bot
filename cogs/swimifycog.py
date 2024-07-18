@@ -5,13 +5,13 @@ from discord.ext import commands
 from io import BytesIO
 from PIL import Image, ImageFont, ImageDraw
 
-from util import *
+from util.general import *
 
 
 # setup font
 max_width = 1000
 font_size = max_width * 0.10
-font_path = "HelveticaNeue-CondensedBlack.ttf"
+font_path = "misc/HelveticaNeue-CondensedBlack.ttf"
 font = ImageFont.truetype(font_path, font_size)
 
 

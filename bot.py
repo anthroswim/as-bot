@@ -4,8 +4,8 @@ import sys
 
 os.chdir(sys.path[0])
 
-from const import *
-from util import *
+from util.general import *
+from util.const import *
 
 import asyncio
 import discord
