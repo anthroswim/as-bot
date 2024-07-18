@@ -1,6 +1,6 @@
 import discord
 
-from const import *
+from util.const import *
 
 # checks if user is eligible for the interaction
 async def devcheck(interaction: discord.Interaction):

@@ -52,7 +52,7 @@ async def sync_cmd(interaction: discord.Interaction):
     if not await devcheck(interaction):
         return
     await interaction.response.defer(ephemeral=True)
-    cmds = await bot.tree.sync(guild=interaction.guild)
+    cmds = await bot.tree.sync()
     for cmd in cmds:
         print(f"Command synced: {cmd}")
     print("Command tree synced")

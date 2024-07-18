@@ -25,7 +25,7 @@ margin = int(max_width * 0.05)
 # generate imatge
 def swimify(text: str) -> Image.Image:
     # generate text with transparent background
-    text = f"[{text}]"
+    text = f"<{text}>"
     text_image = Image.new(color_mode, (max_width, int(2 * font_size)))
     draw = ImageDraw.Draw(text_image)
     draw.text((0, 0), text, font=font, fill=text_color)
@@ -55,7 +55,7 @@ class SwimifyCog(commands.Cog):
             img = swimify(text)
             # save image to BytesIO
             with BytesIO() as image_binary:
-                img.save(image_binary, 'PNG')
+                img.save(image_binary, "PNG")
                 image_binary.seek(0)
                 await interaction.followup.send(file=discord.File(image_binary, "as.png"))
         except Exception as e:
