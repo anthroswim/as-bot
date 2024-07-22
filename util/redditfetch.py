@@ -10,14 +10,17 @@ reddit = asyncpraw.Reddit(
     user_agent="anthroswim",
 )
 
+async def new_reddit_posts(subreddit: str, after, before):
+    sub = await reddit.subreddit(subreddit)
+    async for submission in sub.new(limit=5):
+        if submission.created_utc > after and submission.created_utc < before:
+            yield submission
+
 
 class RedditPost(Post):
     _prefix = "u/"
 
-    async def fetch(self):
-        # fetch
-        submission = await reddit.submission(url=self._url)
-
+    async def generate(self, submission):
         # url
         self._url = submission.shortlink
 
@@ -45,7 +48,7 @@ class RedditPost(Post):
             case PostType.GALLERY:
                 image_dict = submission.media_metadata
                 for i in image_dict:
-                    pattern = r"/([^/]+\.png)"
+                    pattern = r"/([^/?]+)"
                     self._media.append(
                         "https://i.redd.it/"
                         + re.search(pattern, image_dict[i]["s"]["u"]).group(1)
@@ -76,6 +79,11 @@ class RedditPost(Post):
                 self._text = submission.selftext
 
         await super().fetch()
+
+    async def fetch(self):
+        # fetch
+        submission = await reddit.submission(url=self._url)
+        self.generate(submission)
 
     def post_type(subm) -> PostType:
         if getattr(subm, "post_hint", "") == "image":
