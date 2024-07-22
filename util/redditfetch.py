@@ -2,9 +2,7 @@ import os
 import re
 import asyncpraw
 
-import discord.embeds
-
-EMBEDCOLOR = 0x5865F2
+from util.post import Post, PostType
 
 reddit = asyncpraw.Reddit(
     client_id=os.getenv("RDTCLID"),
@@ -13,9 +11,8 @@ reddit = asyncpraw.Reddit(
 )
 
 
-class Post:
-    def __init__(self, url: str):
-        self._url = url
+class RedditPost(Post):
+    _prefix = "u/"
 
     async def fetch(self):
         # fetch
@@ -27,23 +24,21 @@ class Post:
         # author
         author = await reddit.redditor(submission.author.name)
         await author.load()
-        self._auth = author.name
-        self._auth_icon = author.icon_img.split("?")[0]
+        self._author = author.name
+        self._author_icon = author.icon_img.split("?")[0]
+        self._platform = submission.subreddit_name_prefixed
 
         # title
         self._title = submission.title
 
-        # different types
-        self._type = Post.post_type(submission)
-        self._media = []
-        self._text = None
-        self._thumbnail = None
+        # type
+        self._type = RedditPost.post_type(submission)
 
         match self._type:
-            case "image":
+            case PostType.IMAGE:
                 self._media.append(submission.url)
 
-            case "gallery":
+            case PostType.GALLERY:
                 image_dict = submission.media_metadata
                 for i in image_dict:
                     pattern = r"/([^/]+\.png)"
@@ -52,58 +47,39 @@ class Post:
                         + re.search(pattern, image_dict[i]["s"]["u"]).group(1)
                     )
 
-            case "video":
+            case PostType.VIDEO:
                 # reddit is stupit and has the video and audio in separate sources
                 # besides discord doesnt allow videos in embeds
                 self._thumbnail = submission.thumbnail
                 self._media.append(submission.media["reddit_video"]["fallback_url"])
 
-            case "poll":
+            case PostType.POLL:
                 # TODO
                 self._text = "polls arent supported yet"
 
-            case "crosspost":
+            case PostType.CROSSPOST:
                 # TODO
                 self._text = "crossposts arent supported yet"
-                # parent = reddit.submission(url= "https://reddit.com" + submission.crosspost_parent_list[0]["permalink"])
+                self._parent = Post(reddit.submission(url= "https://reddit.com" + submission.crosspost_parent_list[0]["permalink"]))
+                # self._parent.fetch()
 
             case "text":
-                # max 4096 characters
-                self._text = submission.selftext[:4096]
+                self._text = submission.selftext
+        
+        await super().fetch()
 
-    def dc_embed(self):
-        top = discord.Embed(title=self._title, url=self._url, color=EMBEDCOLOR)
-        top.set_author(name=self._auth, icon_url=self._auth_icon)
-        embeds = [top]
-
-        # text
-        if self._text is not None:
-            top.description = self._text
-
-        # media
-        if self._thumbnail is not None:
-            top.set_thumbnail(url=self._thumbnail)
-        elif len(self._media) == 1:
-            top.set_image(url=self._media[0])
-        elif len(self._media) > 1:
-            for url in self._media:
-                embed = discord.Embed(color=EMBEDCOLOR)
-                embed.set_image(url=url)
-                embeds.append(embed)
-
-        return embeds
-
-    def post_type(subm) -> str:
+    def post_type(subm) -> PostType:
         if getattr(subm, "post_hint", "") == "image":
-            return "image"
+            return PostType.IMAGE
         elif getattr(subm, "is_gallery", False):
-            return "gallery"
+            return PostType.GALLERY
         elif subm.is_video:
-            return "video"
+            return PostType.VIDEO
         elif hasattr(subm, "poll_data"):
-            return "poll"
+            return PostType.POLL
         elif hasattr(subm, "crosspost_parent"):
-            return "crosspost"
+            return PostType.CROSSPOST
         elif subm.is_self:
-            return "text"
-        return "link"
+            return PostType.TEXT
+        else:
+            return PostType.UNKNOWN

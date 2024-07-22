@@ -3,7 +3,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from util.general import *
-from util.redditfetch import Post
+from util.redditfetch import RedditPost
 
 class RedditEmbedCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
@@ -18,9 +18,9 @@ class RedditEmbedCog(commands.Cog):
 
         await interaction.response.defer()
         try:
-            post = Post(link)
+            post = RedditPost(link)
             await post.fetch()
-            embeds = post.dc_embed()
+            embeds = post.discord_embeds()
             await interaction.followup.send(embeds=embeds)
         except Exception as e:
             await interaction.followup.send(embed=errorembed(str(e)))
