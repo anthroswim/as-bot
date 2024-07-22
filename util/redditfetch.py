@@ -26,7 +26,11 @@ class RedditPost(Post):
         await author.load()
         self._author = author.name
         self._author_icon = author.icon_img.split("?")[0]
-        self._platform = submission.subreddit_name_prefixed
+        self._platform = (
+            "Reddit"
+            if submission.subreddit_type == "user"
+            else submission.subreddit_name_prefixed
+        )
 
         # title
         self._title = submission.title
@@ -60,12 +64,17 @@ class RedditPost(Post):
             case PostType.CROSSPOST:
                 # TODO
                 self._text = "crossposts arent supported yet"
-                self._parent = Post(reddit.submission(url= "https://reddit.com" + submission.crosspost_parent_list[0]["permalink"]))
+                self._parent = Post(
+                    reddit.submission(
+                        url="https://reddit.com"
+                        + submission.crosspost_parent_list[0]["permalink"]
+                    )
+                )
                 # self._parent.fetch()
 
-            case "text":
+            case PostType.TEXT:
                 self._text = submission.selftext
-        
+
         await super().fetch()
 
     def post_type(subm) -> PostType:

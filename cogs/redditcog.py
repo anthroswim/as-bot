@@ -20,8 +20,10 @@ class RedditEmbedCog(commands.Cog):
         try:
             post = RedditPost(link)
             await post.fetch()
-            embeds = post.discord_embeds()
-            await interaction.followup.send(embeds=embeds)
+            await interaction.followup.send(post.webhook_message(True))
+
+            # embeds = post.discord_embeds()
+            # await interaction.followup.send(embeds=embeds)
         except Exception as e:
             await interaction.followup.send(embed=errorembed(str(e)))
         

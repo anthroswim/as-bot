@@ -78,6 +78,47 @@ class Post:
                 raise Exception("Crossposts are not supported yet")
 
         return embeds
+    
+    def webhook_avatar(self) -> str:
+        return self._author_icon
+
+    def webhook_username(self) -> str:
+        return f"{self._prefix}{self._author} on {self._platform}"
+
+    def webhook_message(self, include_author = False) -> str:
+        if not self._fetched:
+            raise Exception("The post was not fetched")
+        
+        # title
+        message = f"**{self._title}**\n\n"
+
+        # text
+        if self._text:
+            message += f"{self._text}\n"
+
+        # footer
+        message += f"-# Posted "
+        if include_author:
+            message += f"by {self._prefix}{self._author} "
+        message += f"on [{self._platform}](<{self._url}>) "
+
+        # media
+        match self._type:
+            case PostType.TEXT:
+                pass
+            case PostType.IMAGE:
+                message += f"[.]({self._media[0]})"
+            case PostType.GALLERY:
+                for url in self._media:
+                    message += f"[.]({url}) "
+            case PostType.VIDEO:
+                message += f"[.]({self._media[0]})"
+            case PostType.POLL:
+                raise Exception("Polls are not supported yet")
+            case PostType.CROSSPOST:
+                raise Exception("Crossposts are not supported yet")
+
+        return message
         
 
 
