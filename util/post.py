@@ -83,7 +83,7 @@ class Post:
         return self._author_icon
 
     def webhook_username(self) -> str:
-        return f"{self._prefix}{self._author} on {self._platform}"
+        return self._prefix + self._author
 
     def webhook_message(self, include_author = False) -> str:
         if not self._fetched:

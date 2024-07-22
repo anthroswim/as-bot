@@ -5,7 +5,7 @@ from discord.ext import commands
 from util.general import *
 from util.redditfetch import RedditPost
 
-class RedditEmbedCog(commands.Cog):
+class RedditCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         print("Loaded", __class__.__name__)
@@ -16,11 +16,23 @@ class RedditEmbedCog(commands.Cog):
         if not await devcheck(interaction):
             return
 
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         try:
+            # TODO: chache webhooks
+            channel = interaction.channel
+            webhooks = await channel.webhooks()
+            if not webhooks:
+                await channel.create_webhook(name="FeedHelper")
+                webhooks = await channel.webhooks()
+            webhook = webhooks[0]
+
+
             post = RedditPost(link)
             await post.fetch()
-            await interaction.followup.send(post.webhook_message(True))
+
+            await webhook.send(post.webhook_message(), username=post.webhook_username(), avatar_url=post.webhook_avatar())
+
+            await interaction.followup.send("Done")
 
             # embeds = post.discord_embeds()
             # await interaction.followup.send(embeds=embeds)
@@ -30,4 +42,4 @@ class RedditEmbedCog(commands.Cog):
 
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(RedditEmbedCog(bot))
+    await bot.add_cog(RedditCog(bot))
