@@ -9,7 +9,7 @@ from util.general import *
 
 
 # setup font
-max_width = 1000
+max_width = 10000
 font_size = max_width * 0.10
 font_path = "misc/HelveticaNeue-CondensedBlack.ttf"
 font = ImageFont.truetype(font_path, font_size)
