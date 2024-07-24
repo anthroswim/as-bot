@@ -46,10 +46,6 @@ class SwimifyCog(commands.Cog):
 
     @app_commands.command(name="swimify", description="swimify text")
     async def swimify_cmd(self, interaction: discord.Interaction, text: str):
-        # TODO: remove after testing
-        if not await devcheck(interaction):
-            return
-
         await interaction.response.defer()
         try:
             img = swimify(text)

@@ -101,7 +101,7 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
             # if the key exists
             if subreddit in redditfollows["subs"]:
                 # remove channel
-                redditfollows["subs"][subreddit].remove(interaction.channel_id)
+                redditfollows["subs"][subreddit]["dc"].remove(interaction.channel_id)
                 # remove empty keys
                 if redditfollows["subs"][subreddit] == {"dc": [], "tg": []}:
                     del redditfollows["subs"][subreddit]
