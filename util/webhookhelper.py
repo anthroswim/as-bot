@@ -10,9 +10,14 @@ async def get_webhook(ch_id: int, bot = None):
     
     channel = bot.get_channel(ch_id)
     webhooks = await channel.webhooks()
-    if not webhooks:
-        await channel.create_webhook(name="FeedHelper")
+
+    # check if theres a valid webhook already we can use
+    for webhook in webhooks:
+        if webhook.name == "ASFeed":
+            webhook_cache[ch_id] = webhook
+            return webhook
+    else:
+        webhook = await channel.create_webhook(name="ASFeed")
         webhooks = await channel.webhooks()
-    
-    webhook_cache[ch_id] = webhooks[0]
-    return webhooks[0]
+        webhook_cache[ch_id] = webhook
+        return webhook
