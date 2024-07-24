@@ -10,6 +10,7 @@ from util.general import *
 from util.redditfetch import RedditPost, new_reddit_posts, reddit
 from util.const import redditfollows, savejson
 from util.webhookhelper import get_webhook
+from util.telegramhelper import tg_send
 
 
 class RedditCog(commands.GroupCog, group_name='reddit'):
@@ -28,7 +29,16 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
             async for submission in new_reddit_posts(subreddit, after, before):
                 post = RedditPost(submission.shortlink)
                 await post.generate(submission)
-                for channel_id in redditfollows["subs"][subreddit]:
+
+                # telegram
+                for chat_id in redditfollows["subs"][subreddit]["tg"]:
+                    try:
+                        await tg_send(chat_id, post)
+                    except Exception as e:
+                        print(f"Error sending to telegram: {e}")
+                
+                # discord
+                for channel_id in redditfollows["subs"][subreddit]["dc"]:
                     webhook = await get_webhook(channel_id, self.bot)
                     await webhook.send(post.webhook_message(), username=post.webhook_username(), avatar_url=post.webhook_avatar())
         
@@ -45,7 +55,7 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
         if not await devcheck(interaction):
             return
         
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=False)
 
         try:
             if subreddit.startswith("r/"):
@@ -56,10 +66,10 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
             
             # make key if it doesnt exist
             if subreddit not in redditfollows["subs"]:
-                redditfollows["subs"][subreddit] = []
+                redditfollows["subs"][subreddit] = {"dc": [], "tg": []}
             # check if already following
-            if interaction.channel_id not in redditfollows["subs"][subreddit]:
-                redditfollows["subs"][subreddit].append(interaction.channel_id)
+            if interaction.channel_id not in redditfollows["subs"][subreddit]["dc"]:
+                redditfollows["subs"][subreddit]["dc"].append(interaction.channel_id)
             # save changes
             savejson("conf/redditfollows", redditfollows)
             
@@ -79,7 +89,7 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
         if not await devcheck(interaction):
             return
         
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer(ephemeral=False)
 
         try:
             if subreddit.startswith("r/"):
@@ -93,10 +103,10 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
                 # remove channel
                 redditfollows["subs"][subreddit].remove(interaction.channel_id)
                 # remove empty keys
-                if redditfollows["subs"][subreddit] == []:
+                if redditfollows["subs"][subreddit] == {"dc": [], "tg": []}:
                     del redditfollows["subs"][subreddit]
-            # save changes
-            savejson("conf/redditfollows", redditfollows)
+                # save changes
+                savejson("conf/redditfollows", redditfollows)
             
             await interaction.followup.send(f"Unollowed {subreddit}")
         
