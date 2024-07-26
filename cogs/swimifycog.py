@@ -9,8 +9,8 @@ from util.general import *
 
 
 # setup font
-max_width = 10000
-font_size = max_width * 0.10
+max_width = 2000
+font_size = max_width * 0.02
 font_path = "misc/HelveticaNeue-CondensedBlack.ttf"
 font = ImageFont.truetype(font_path, font_size)
 
@@ -19,13 +19,14 @@ font = ImageFont.truetype(font_path, font_size)
 color_mode = "RGBA"
 text_color = "#FFFFFF"
 background_color = "#000000"
-margin = int(max_width * 0.05)
+margin = int(font_size)
 
 
 # generate imatge
-def swimify(text: str) -> Image.Image:
+def swimify(text: str, raw = False) -> Image.Image:
     # generate text with transparent background
-    text = f"<{text}>"
+    if not raw:
+        text = f"<{text}>"
     text_image = Image.new(color_mode, (max_width, int(2 * font_size)))
     draw = ImageDraw.Draw(text_image)
     draw.text((0, 0), text, font=font, fill=text_color)
@@ -45,10 +46,10 @@ class SwimifyCog(commands.Cog):
         print("Loaded", __class__.__name__)
 
     @app_commands.command(name="swimify", description="swimify text")
-    async def swimify_cmd(self, interaction: discord.Interaction, text: str):
+    async def swimify_cmd(self, interaction: discord.Interaction, text: str, raw: bool = False):
         await interaction.response.defer()
         try:
-            img = swimify(text)
+            img = swimify(text, raw)
             # save image to BytesIO
             with BytesIO() as image_binary:
                 img.save(image_binary, "PNG")

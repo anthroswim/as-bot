@@ -27,6 +27,7 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
         before = time.time()
         for subreddit in redditfollows["subs"]:
             async for submission in new_reddit_posts(subreddit, after, before):
+                await submission.load()
                 post = RedditPost(submission.shortlink)
                 await post.generate(submission)
 
@@ -39,8 +40,11 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
                 
                 # discord
                 for channel_id in redditfollows["subs"][subreddit]["dc"]:
-                    webhook = await get_webhook(channel_id, self.bot)
-                    await webhook.send(post.webhook_message(), username=post.webhook_username(), avatar_url=post.webhook_avatar())
+                    try:
+                        webhook = await get_webhook(channel_id, self.bot)
+                        await webhook.send(post.webhook_message(), username=post.webhook_username(), avatar_url=post.webhook_avatar())
+                    except Exception as e:
+                        print(f"Error sending to discord: {e}")
         
         redditfollows["last"] = before
         savejson("conf/redditfollows", redditfollows)
