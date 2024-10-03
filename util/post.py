@@ -31,7 +31,10 @@ class Post:
         self._text = None
 
         # image
-        self._media = []
+        self._media_urls = []
+        
+        # porcessed media
+        self._chached_media = []
 
         # video
         self._thumbnail = None
@@ -64,9 +67,9 @@ class Post:
             case PostType.TEXT:
                 pass
             case PostType.IMAGE:
-                top.set_image(url=self._media[0])
+                top.set_image(url=self._media_urls[0])
             case PostType.GALLERY:
-                for url in self._media:
+                for url in self._media_urls:
                     embed = Embed(color=embed_color)
                     embed.set_image(url=url)
                     embeds.append(embed)
@@ -107,12 +110,12 @@ class Post:
             case PostType.TEXT:
                 pass
             case PostType.IMAGE:
-                message += f"[.]({self._media[0]})"
+                message += f"[.]({self._media_urls[0]})"
             case PostType.GALLERY:
-                for url in self._media:
+                for url in self._media_urls:
                     message += f"[.]({url}) "
             case PostType.VIDEO:
-                message += f"[.]({self._media[0]})"
+                message += f"[.]({self._media_urls[0]})"
             case PostType.POLL:
                 raise Exception("Polls are not supported yet")
             case PostType.CROSSPOST:

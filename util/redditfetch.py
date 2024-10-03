@@ -1,6 +1,9 @@
 import os
 import re
 import asyncpraw
+import requests
+import io
+import subprocess
 
 from util.post import Post, PostType
 
@@ -35,48 +38,54 @@ class RedditPost(Post):
             else submission.subreddit_name_prefixed
         )
 
+        # TODO: id from shortlink
+
         # title
         self._title = submission.title
 
         # type
         self._type = RedditPost.post_type(submission)
 
-        match self._type:
-            case PostType.IMAGE:
-                self._media.append(submission.url)
-
-            case PostType.GALLERY:
-                image_dict = submission.media_metadata
-                for i in image_dict:
-                    pattern = r"/([^/?]+)(?:\?|$)"
-                    self._media.append(
-                        "https://i.redd.it/"
-                        + re.search(pattern, image_dict[i]["s"]["u"]).group(1)
-                    )
-
-            case PostType.VIDEO:
-                # reddit is stupit and has the video and audio in separate sources
-                # besides discord doesnt allow videos in embeds
-                self._thumbnail = submission.thumbnail
-                self._media.append(submission.media["reddit_video"]["fallback_url"])
-
-            case PostType.POLL:
-                # TODO
-                self._text = "polls arent supported yet"
-
-            case PostType.CROSSPOST:
-                # TODO
-                self._text = "crossposts arent supported yet"
-                self._parent = Post(
-                    reddit.submission(
-                        url="https://reddit.com"
-                        + submission.crosspost_parent_list[0]["permalink"]
-                    )
+        if self._type is PostType.IMAGE:
+            self._media_urls.append(submission.url)
+        
+        elif self._type is PostType.GALLERY:
+            image_dict = submission.media_metadata
+            for i in image_dict:
+                pattern = r"/([^/?]+)(?:\?|$)"
+                self._media_urls.append(
+                    "https://i.redd.it/"
+                    + re.search(pattern, image_dict[i]["s"]["u"]).group(1)
                 )
-                # self._parent.fetch()
 
-            case PostType.TEXT:
-                self._text = submission.selftext
+        elif self._type is PostType.VIDEO:
+            # reddit is stupit and has the video and audio in separate sources
+            # besides discord doesnt allow videos in embeds
+            self._thumbnail = submission.thumbnail
+            self._media_urls.append(submission.media["reddit_video"]["fallback_url"])
+            try:
+                self._chached_media.append(RedditPost.fetch_m3u8(submission.media["reddit_video"]["hls_url"], submission.id))
+            except Exception as e:
+                print(f"Error fetching m3u8: {e}")
+
+
+        elif self._type is PostType.POLL:
+            # TODO
+            self._text = "polls arent supported yet"
+
+        elif self._type is PostType.CROSSPOST:
+            # TODO
+            self._text = "crossposts arent supported yet"
+            self._parent = Post(
+                reddit.submission(
+                    url="https://reddit.com"
+                    + submission.crosspost_parent_list[0]["permalink"]
+                )
+            )
+            # self._parent.fetch()
+
+        elif self._type is PostType.TEXT:
+            self._text = submission.selftext
 
         await super().fetch()
 
@@ -100,3 +109,25 @@ class RedditPost(Post):
             return PostType.TEXT
         else:
             return PostType.UNKNOWN
+        
+    def fetch_m3u8(url, postid) -> str:
+        if not os.path.exists("temp/"):
+            os.mkdir("temp")
+        path = f"temp/{postid}.mp4"
+        if os.path.exists(path):
+            return path
+        
+        command = [
+            "ffmpeg",
+            "-i", url,
+            "-c", "copy",
+            "-f", "mp4",
+            path
+        ]
+
+        process = subprocess.run(command)
+
+        if process.returncode != 0:
+            raise Exception(f"FFmpeg error, have fun debugging")
+        
+        return path

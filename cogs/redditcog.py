@@ -9,8 +9,8 @@ import time
 from util.general import *
 from util.redditfetch import RedditPost, new_reddit_posts, reddit
 from util.const import redditfollows, savejson
-from util.webhookhelper import get_webhook
 from util.telegramhelper import tg_send
+from util.webhook import threadhook_send
 
 
 class RedditCog(commands.GroupCog, group_name='reddit'):
@@ -41,8 +41,7 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
                 # discord
                 for channel_id in redditfollows["subs"][subreddit]["dc"]:
                     try:
-                        webhook = await get_webhook(channel_id, self.bot)
-                        await webhook.send(post.webhook_message(), username=post.webhook_username(), avatar_url=post.webhook_avatar())
+                        await threadhook_send(self.bot.get_channel(channel_id), self.bot, post.webhook_message(), post.webhook_username(), post.webhook_avatar())
                     except Exception as e:
                         print(f"Error sending to discord: {e}")
         
@@ -121,6 +120,23 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
         except Exception as e:
             await interaction.followup.send(embed=errorembed(f"Error: {e}"))
             return
+        
+    
+    @app_commands.command(name="debug", description="send as markdown")
+    async def debug(
+        self, interaction: discord.Interaction, link: str,
+    ):
+        if not await devcheck(interaction):
+            return
+        
+        await interaction.response.defer(ephemeral=True)
+
+        post = RedditPost(link)
+        await post.fetch()
+        
+        await threadhook_send(interaction.channel, self.bot, post.webhook_message(), post.webhook_username(), post.webhook_avatar(), post._chached_media)
+        
+        await interaction.followup.send("✅", ephemeral=True)
 
         
 
