@@ -1,0 +1,33 @@
+import discord
+# TODO: make cache expire
+webhook_cache = {}
+
+async def get_webhook(channel, bot = None) -> discord.Webhook:
+    if channel.id in webhook_cache:
+        return webhook_cache[channel.id]
+    
+    if not bot:
+        return None
+    
+    webhooks = await channel.webhooks()
+
+    # check if theres a valid webhook already we can use
+    for webhook in webhooks:
+        if webhook.name == "ASFeed":
+            webhook_cache[channel.id] = webhook
+            return webhook
+    else:
+        webhook = await channel.create_webhook(name="ASFeed")
+        webhooks = await channel.webhooks()
+        webhook_cache[channel.id] = webhook
+        return webhook
+    
+async def threadhook_send(channel, bot, message, username, avatar_url, files=None):
+    # FIXME this shit so ass
+    if isinstance(channel, discord.Thread):
+        # specify thread
+        webhook = await get_webhook(channel.parent, bot)
+        await webhook.send(message, username=username, avatar_url=avatar_url, thread=channel)
+    else:
+        webhook = await get_webhook(channel, bot)
+        await webhook.send(message, username=username, avatar_url=avatar_url, files=[discord.File(f) for f in files] if files else None)
