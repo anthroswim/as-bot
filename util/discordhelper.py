@@ -22,12 +22,22 @@ async def get_webhook(channel, bot = None) -> discord.Webhook:
         webhook_cache[channel.id] = webhook
         return webhook
     
-async def threadhook_send(channel, bot, message, username, avatar_url, files=None):
-    # FIXME this shit so ass
+async def discord_post(channel, bot, post):
+    # kwargs magic
+    kwargs = {
+        "username": post.get_author(),
+        "avatar_url": post.get_avatar()
+    }
+    
+    if files := post.get_files():
+        kwargs["files"] = [discord.File(f) for f in files]
+    
     if isinstance(channel, discord.Thread):
-        # specify thread
-        webhook = await get_webhook(channel.parent, bot)
-        await webhook.send(message, username=username, avatar_url=avatar_url, thread=channel)
-    else:
-        webhook = await get_webhook(channel, bot)
-        await webhook.send(message, username=username, avatar_url=avatar_url, files=[discord.File(f) for f in files] if files else None)
+        kwargs["thread"] = channel
+        channel = channel.parent
+    
+    webhook = await get_webhook(channel, bot)
+
+    message = post.get_message(include_author=False, include_medialinks=files is None)
+
+    await webhook.send(message, **kwargs)

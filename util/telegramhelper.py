@@ -9,7 +9,7 @@ bot = Bot(token=os.getenv("TGBOTTOKEN"))
 
 special_characters = r"[_*\[\]()~`>#+-=|{}.!]"
 
-async def tg_send(chat_id, post: Post):
+async def telegram_post(chat_id, post: Post):
     # text
     message = f"*{escape_markdown(post._title)}*\n\n"
     if post._text:

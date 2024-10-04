@@ -6,11 +6,11 @@ import asyncprawcore
 
 import time
 
+from util.discordhelper import discord_post
 from util.general import *
 from util.redditfetch import RedditPost, new_reddit_posts, reddit
 from util.const import redditfollows, savejson
-from util.telegramhelper import tg_send
-from util.webhook import threadhook_send
+from util.telegramhelper import telegram_post
 
 
 class RedditCog(commands.GroupCog, group_name='reddit'):
@@ -34,14 +34,15 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
                 # telegram
                 for chat_id in redditfollows["subs"][subreddit]["tg"]:
                     try:
-                        await tg_send(chat_id, post)
+                        await telegram_post(chat_id, post)
                     except Exception as e:
                         print(f"Error sending to telegram: {e}")
                 
                 # discord
                 for channel_id in redditfollows["subs"][subreddit]["dc"]:
                     try:
-                        await threadhook_send(self.bot.get_channel(channel_id), self.bot, post.webhook_message(), post.webhook_username(), post.webhook_avatar())
+                        channel = self.bot.get_channel(channel_id)
+                        await discord_post(channel, self.bot, post)
                     except Exception as e:
                         print(f"Error sending to discord: {e}")
         
@@ -134,7 +135,7 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
         post = RedditPost(link)
         await post.fetch()
         
-        await threadhook_send(interaction.channel, self.bot, post.webhook_message(), post.webhook_username(), post.webhook_avatar(), post._chached_media)
+        await discord_post(interaction.channel, self.bot, post)
         
         await interaction.followup.send("✅", ephemeral=True)
 

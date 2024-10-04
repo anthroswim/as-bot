@@ -5,6 +5,7 @@ import requests
 import io
 import subprocess
 
+from util.filecache import FileCache
 from util.post import Post, PostType
 
 reddit = asyncpraw.Reddit(
@@ -111,12 +112,17 @@ class RedditPost(Post):
             return PostType.UNKNOWN
         
     def fetch_m3u8(url, postid) -> str:
-        if not os.path.exists("temp/"):
-            os.mkdir("temp")
-        path = f"temp/{postid}.mp4"
-        if os.path.exists(path):
+        file = f"{postid}.mp4"
+
+        # check if the file exists
+        path = FileCache.getfile(file)
+        if path:
             return path
+        # otherwise pick the download location
+        else:
+            path = FileCache.pathjoin(file)
         
+        # and fetch with ffmpeg
         command = [
             "ffmpeg",
             "-i", url,
