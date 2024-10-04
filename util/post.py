@@ -1,6 +1,8 @@
 from enum import Enum
 from discord import Embed
 
+from util.filecache import FileCache
+
 
 class PostType(Enum):
     TEXT = 1
@@ -82,13 +84,13 @@ class Post:
 
         return embeds
     
-    def webhook_avatar(self) -> str:
+    def get_avatar(self) -> str:
         return self._author_icon
 
-    def webhook_username(self) -> str:
+    def get_username(self) -> str:
         return self._prefix + self._author
 
-    def webhook_message(self, include_author = False) -> str:
+    def get_message(self, include_author = False, include_medialinks = True) -> str:
         if not self._fetched:
             raise Exception("The post was not fetched")
         
@@ -105,25 +107,33 @@ class Post:
             message += f"by {self._prefix}{self._author} "
         message += f"on [{self._platform}](<{self._url}>) "
 
+        
         # media
-        match self._type:
-            case PostType.TEXT:
-                pass
-            case PostType.IMAGE:
-                message += f"[.]({self._media_urls[0]})"
-            case PostType.GALLERY:
-                for url in self._media_urls:
-                    message += f"[.]({url}) "
-            case PostType.VIDEO:
-                message += f"[.]({self._media_urls[0]})"
-            case PostType.POLL:
-                raise Exception("Polls are not supported yet")
-            case PostType.CROSSPOST:
-                raise Exception("Crossposts are not supported yet")
+        if include_medialinks:
+            match self._type:
+                case PostType.TEXT:
+                    pass
+                case PostType.IMAGE:
+                    message += f"[.]({self._media_urls[0]})"
+                case PostType.GALLERY:
+                    for url in self._media_urls:
+                        message += f"[.]({url}) "
+                case PostType.VIDEO:
+                    message += f"[.]({self._media_urls[0]})"
+                case PostType.POLL:
+                    raise Exception("Polls are not supported yet")
+                case PostType.CROSSPOST:
+                    raise Exception("Crossposts are not supported yet")
 
         return message
-        
-
+    
+    def get_files(self) -> list[str]:
+        return self._chached_media
+    
+    def __del__(self):
+        print("deleting post")
+        for media in self._chached_media:
+            FileCache.removepath(media)
 
 class Poll:
     def __init__(self):
