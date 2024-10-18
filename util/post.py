@@ -131,7 +131,6 @@ class Post:
         return self._chached_media
     
     def __del__(self):
-        print("deleting post")
         for media in self._chached_media:
             FileCache.removepath(media)
 

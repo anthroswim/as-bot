@@ -39,8 +39,6 @@ class RedditPost(Post):
             else submission.subreddit_name_prefixed
         )
 
-        # TODO: id from shortlink
-
         # title
         self._title = submission.title
 
@@ -49,6 +47,7 @@ class RedditPost(Post):
 
         if self._type is PostType.IMAGE:
             self._media_urls.append(submission.url)
+            self._thumbnail = submission.thumbnail
         
         elif self._type is PostType.GALLERY:
             image_dict = submission.media_metadata
@@ -58,6 +57,7 @@ class RedditPost(Post):
                     "https://i.redd.it/"
                     + re.search(pattern, image_dict[i]["s"]["u"]).group(1)
                 )
+            self._thumbnail = submission.thumbnail
 
         elif self._type is PostType.VIDEO:
             # reddit is stupit and has the video and audio in separate sources
@@ -128,6 +128,7 @@ class RedditPost(Post):
             "-i", url,
             "-c", "copy",
             "-f", "mp4",
+            "-hide_banner", "-loglevel", "error",
             path
         ]
 
