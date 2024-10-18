@@ -25,7 +25,7 @@ async def get_webhook(channel, bot = None) -> discord.Webhook:
 async def discord_post(channel, bot, post):
     # kwargs magic
     kwargs = {
-        "username": post.get_author(),
+        "username": post.get_username(),
         "avatar_url": post.get_avatar()
     }
     
@@ -38,6 +38,12 @@ async def discord_post(channel, bot, post):
     
     webhook = await get_webhook(channel, bot)
 
-    message = post.get_message(include_author=False, include_medialinks=files is None)
-
-    await webhook.send(message, **kwargs)
+    try:
+        message = post.get_message(include_author=False, include_medialinks=files is None)
+        await webhook.send(message, **kwargs)
+    except Exception as e:
+        print(f"Error sending to discord: {e}")
+        # retry without files
+        message = post.get_message(include_author=False, include_medialinks=True)
+        kwargs.pop("files")
+        await webhook.send(message, **kwargs)

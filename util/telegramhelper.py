@@ -1,11 +1,11 @@
-from telegram import Bot, InputMediaPhoto
+from telegram import Bot, InputMediaPhoto, InputMediaVideo
 from telegram.constants import ParseMode
 import os
 import re
 
 from util.post import Post, PostType
 
-bot = Bot(token=os.getenv("TGBOTTOKEN"))
+bot = Bot(token=os.getenv("TGBOTTOKEN"), local_mode=True)
 
 special_characters = r"[_*\[\]()~`>#+-=|{}.!]"
 
@@ -24,15 +24,19 @@ async def telegram_post(chat_id, post: Post):
             media = [InputMediaPhoto(media) for media in post._media_urls]
             await bot.send_media_group(chat_id=chat_id, media=media, caption=message, parse_mode=ParseMode.MARKDOWN_V2)
         elif post._type == PostType.VIDEO:
-            message += " \\(video\\)"
-            await bot.send_photo(chat_id=chat_id, photo=post._thumbnail, caption=message, parse_mode=ParseMode.MARKDOWN_V2)
+            with open(post.get_files()[0], "rb") as video_file:
+                await bot.send_video(chat_id=chat_id, video=video_file, caption=message, parse_mode=ParseMode.MARKDOWN_V2)
         else:
             await bot.send_message(chat_id=chat_id, text=message, parse_mode=ParseMode.MARKDOWN_V2, link_preview_options={"is_disabled": True})
     
+    # retry with thumbnail
     except Exception as e:
-        print(f"Error sending to telegram: {e}")
-        message += " \\(preview unavailable\\)"
-        await bot.send_message(chat_id=chat_id, text=message, parse_mode=ParseMode.MARKDOWN_V2, link_preview_options={"is_disabled": True})
+        if post._type in [PostType.IMAGE, PostType.GALLERY, PostType.VIDEO]:
+            try:
+                message += " \\(thumbnail\\)"
+                await bot.send_photo(chat_id=chat_id, photo=post._thumbnail, caption=message, parse_mode=ParseMode.MARKDOWN_V2)
+            except Exception as e:
+                print(f"Fatal error sending to telegram: {e}")
 
 
 def escape_markdown(text: str) -> str:
