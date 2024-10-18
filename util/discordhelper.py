@@ -39,7 +39,7 @@ async def discord_post(channel, bot, post):
     webhook = await get_webhook(channel, bot)
 
     try:
-        message = post.get_message(include_author=False, include_medialinks=files is None)
+        message = post.get_message(include_author=False, include_medialinks=not files)
         await webhook.send(message, **kwargs)
     except Exception as e:
         print(f"Error sending to discord: {e}")

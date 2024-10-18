@@ -135,8 +135,8 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
         post = RedditPost(link)
         await post.fetch()
         
-        # await discord_post(interaction.channel, self.bot, post)
-        await telegram_post(5485019341, post)
+        await discord_post(interaction.channel, self.bot, post)
+        # await telegram_post(5485019341, post)
         
         await interaction.followup.send("✅", ephemeral=True)
 
