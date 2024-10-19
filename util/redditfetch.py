@@ -1,8 +1,9 @@
+import json
 import os
 import re
 import asyncpraw
+from bs4 import BeautifulSoup
 import requests
-import io
 import subprocess
 
 from util.filecache import FileCache
@@ -13,6 +14,9 @@ reddit = asyncpraw.Reddit(
     client_secret=os.getenv("RDTCLSECRET"),
     user_agent="anthroswim",
 )
+
+# special thanks to rxddit
+RX_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/116.0"
 
 async def new_reddit_posts(subreddit: str, after, before):
     sub = await reddit.subreddit(subreddit)
@@ -60,14 +64,18 @@ class RedditPost(Post):
             self._thumbnail = submission.thumbnail
 
         elif self._type is PostType.VIDEO:
-            # reddit is stupit and has the video and audio in separate sources
-            # besides discord doesnt allow videos in embeds
+            video = submission.media["reddit_video"]
+            video_url = video["fallback_url"]
+
+            # for audio we need to find the url that includes it
+            if video["has_audio"]:
+                if audiovideo := RedditPost.fetch_video_link("https://reddit.com" + submission.permalink):
+                    video_url = audiovideo 
+
+            self._media_urls.append(video_url)
             self._thumbnail = submission.thumbnail
-            self._media_urls.append(submission.media["reddit_video"]["fallback_url"])
-            try:
-                self._chached_media.append(RedditPost.fetch_m3u8(submission.media["reddit_video"]["hls_url"], submission.id))
-            except Exception as e:
-                print(f"Error fetching m3u8: {e}")
+
+
 
 
         elif self._type is PostType.POLL:
@@ -77,6 +85,7 @@ class RedditPost(Post):
         elif self._type is PostType.CROSSPOST:
             # TODO
             self._text = "crossposts arent supported yet"
+            # TODO remove
             self._parent = Post(
                 reddit.submission(
                     url="https://reddit.com"
@@ -110,6 +119,26 @@ class RedditPost(Post):
             return PostType.TEXT
         else:
             return PostType.UNKNOWN
+        
+    def fetch_video_link(url: str) -> str:
+        try:
+            # get
+            response = requests.get(url, headers={"User-Agent": RX_USER_AGENT})
+            if response.status_code != 200:
+                return None
+
+            # parese
+            soup = BeautifulSoup(response.text, "html.parser")
+            packaged_media_plain = soup.find(attrs={"packaged-media-json": True}).get("packaged-media-json")
+            packaged_media = json.loads(packaged_media_plain)
+            videos = packaged_media.get("playbackMp4s", {}).get("permutations", [])
+
+            # pick the highest resolution
+            if videos:
+                return videos[-1]["source"]["url"]
+
+        except Exception as _:
+            return None
         
     def fetch_m3u8(url, postid) -> str:
         file = f"{postid}.mp4"
