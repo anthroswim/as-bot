@@ -39,5 +39,5 @@ async def telegram_post(chat_id, post: Post):
 
 
 def escape_markdown(text: str) -> str:
-    escaped_text = re.sub(special_characters, r"\\\g<0>", text)
+    escaped_text = re.sub(special_characters, r"\\\g<0>", text.replace("\\", "")) # TODO: temporary fix
     return escaped_text
