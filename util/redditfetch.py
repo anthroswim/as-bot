@@ -60,14 +60,15 @@ class RedditPost(Post):
             self._thumbnail = submission.thumbnail
 
         elif self._type is PostType.VIDEO:
-            # reddit is stupit and has the video and audio in separate sources
-            # besides discord doesnt allow videos in embeds
+            video = submission.media["reddit_video"]
+            video_url = video["fallback_url"]
+
+            # for audio we need to find the url that includes it
+            if video["has_audio"]:
+                video_url = "https://rxddit.com/v" + submission.permalink
+
+            self._media_urls.append(video_url)
             self._thumbnail = submission.thumbnail
-            self._media_urls.append(submission.media["reddit_video"]["fallback_url"])
-            try:
-                self._chached_media.append(RedditPost.fetch_m3u8(submission.media["reddit_video"]["hls_url"], submission.id))
-            except Exception as e:
-                print(f"Error fetching m3u8: {e}")
 
 
         elif self._type is PostType.POLL:
