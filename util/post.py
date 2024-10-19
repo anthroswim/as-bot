@@ -14,6 +14,7 @@ class PostType(Enum):
 
 
 class Post:
+    # TODO: a more object oriented approach instead of posttype
     _prefix = ""
     _platform = "unknown"
 
@@ -41,7 +42,7 @@ class Post:
         self._thumbnail = None
 
         # poll
-        self._poll = None
+        self._poll_options = []
 
         # crosspost/retweet/quote
         self._parent = None
@@ -98,6 +99,10 @@ class Post:
         if self._text:
             message += f"{self._text}\n"
 
+        # poll
+        for option in self._poll_options:
+            message += f"- {option}\n"
+
         # footer
         message += f"-# Posted "
         if include_author:
@@ -108,8 +113,6 @@ class Post:
         # media
         if include_medialinks:
             match self._type:
-                case PostType.TEXT:
-                    pass
                 case PostType.IMAGE:
                     message += f"[.]({self._media_urls[0]})"
                 case PostType.GALLERY:
@@ -117,8 +120,6 @@ class Post:
                         message += f"[.]({url}) "
                 case PostType.VIDEO:
                     message += f"[.]({self._media_urls[0]})"
-                case PostType.POLL:
-                    raise Exception("Polls are not supported yet")
 
         return message
     
@@ -128,9 +129,3 @@ class Post:
     def __del__(self):
         for media in self._chached_media:
             FileCache.removepath(media)
-
-class Poll:
-    def __init__(self):
-        self._title = None
-        self._options = [] # stored in tuples (option, votes)
-        self._total_votes = 0
