@@ -76,8 +76,8 @@ class RedditPost(Post):
 
 
         elif self._type is PostType.POLL:
-            # TODO
-            self._text = "polls arent supported yet"
+            self._text = submission.selftext.split("\n\n[View Poll]")[0]
+            self._poll_options = [o.text for o in submission.poll_data.options]
 
         elif self._type is PostType.TEXT:
             self._text = submission.selftext
