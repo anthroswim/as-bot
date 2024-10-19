@@ -10,8 +10,7 @@ class PostType(Enum):
     GALLERY = 3
     VIDEO = 4
     POLL = 5
-    CROSSPOST = 6
-    UNKNOWN = 7
+    UNKNOWN = 6
 
 
 class Post:
@@ -44,7 +43,7 @@ class Post:
         # poll
         self._poll = None
 
-        # crosspost
+        # crosspost/retweet/quote
         self._parent = None
 
     async def fetch(self):
@@ -79,8 +78,6 @@ class Post:
                 top.set_thumbnail(url=self._thumbnail)
             case PostType.POLL:
                 raise Exception("Polls are not supported yet")
-            case PostType.CROSSPOST:
-                raise Exception("Crossposts are not supported yet")
 
         return embeds
     
@@ -122,8 +119,6 @@ class Post:
                     message += f"[.]({self._media_urls[0]})"
                 case PostType.POLL:
                     raise Exception("Polls are not supported yet")
-                case PostType.CROSSPOST:
-                    raise Exception("Crossposts are not supported yet")
 
         return message
     
