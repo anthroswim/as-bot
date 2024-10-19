@@ -8,14 +8,14 @@
             "name": "bot",
             "type": "debugpy",
             "request": "launch",
-            "program": "bot.py",
+            "program": "./bot.py",
             "console": "integratedTerminal"
         },
         {
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "./bot.py",
+            "program": "${file}",
             "console": "integratedTerminal"
         }
     ]

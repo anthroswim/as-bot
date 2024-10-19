@@ -28,6 +28,10 @@ class RedditPost(Post):
         # url
         self._url = submission.shortlink
 
+        # check parent
+        if hasattr(submission, "crosspost_parent"):
+            self._parent = submission.crosspost_parent_list[0]
+
         # author
         author = await reddit.redditor(submission.author.name)
         await author.load()
@@ -75,17 +79,6 @@ class RedditPost(Post):
             # TODO
             self._text = "polls arent supported yet"
 
-        elif self._type is PostType.CROSSPOST:
-            # TODO
-            self._text = "crossposts arent supported yet"
-            self._parent = Post(
-                reddit.submission(
-                    url="https://reddit.com"
-                    + submission.crosspost_parent_list[0]["permalink"]
-                )
-            )
-            # self._parent.fetch()
-
         elif self._type is PostType.TEXT:
             self._text = submission.selftext
 
@@ -105,8 +98,6 @@ class RedditPost(Post):
             return PostType.VIDEO
         elif hasattr(subm, "poll_data"):
             return PostType.POLL
-        elif hasattr(subm, "crosspost_parent"):
-            return PostType.CROSSPOST
         elif subm.is_self:
             return PostType.TEXT
         else:
