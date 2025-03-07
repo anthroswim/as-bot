@@ -3,3 +3,4 @@ pillow
 python-dotenv
 asyncpraw
 python-telegram-bot
+feedparser

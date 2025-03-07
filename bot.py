@@ -4,15 +4,13 @@ import sys
 
 os.chdir(sys.path[0])
 
-from util.general import *
-from util.const import *
+from util.const import ASDEBUG
+from util.msgutil import devcheck
+from util.loghelper import log
 
 import asyncio
 import discord
 from discord.ext import commands
-
-from dotenv import load_dotenv
-load_dotenv()
 
 
 # discord init
@@ -36,16 +34,9 @@ async def main():
 # on ready
 @bot.event
 async def on_ready():
-    print(f"Logged in as {bot.user}")
+    log.info(f"Logged in as {bot.user}")
     if ASDEBUG:
-        print("Debug mode enabled")
-
-    if FORCESYNC:
-        # discord doesnt like it when you do this immediately
-        await asyncio.sleep(5)
-        cmds = await bot.tree.sync()
-        for cmd in cmds:
-            print(f"Command synced: {cmd}")
+        log.info("Debug mode enabled")
     
 
 
@@ -57,8 +48,8 @@ async def sync_cmd(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=True)
     cmds = await bot.tree.sync()
     for cmd in cmds:
-        print(f"Command synced: {cmd}")
-    print("Command tree synced")
+        log.info(f"Command synced: {cmd}")
+    log.info("Command tree synced")
     await interaction.followup.send("Command tree synced")
 
 

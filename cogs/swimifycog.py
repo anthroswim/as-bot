@@ -5,7 +5,8 @@ from discord.ext import commands
 from io import BytesIO
 from PIL import Image, ImageFont, ImageDraw
 
-from util.general import *
+from util.loghelper import log_cog_load
+from util.msgutil import errorembed
 
 
 # setup font
@@ -43,7 +44,7 @@ def swimify(text: str, raw = False) -> Image.Image:
 class SwimifyCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        print("Loaded", __class__.__name__)
+        log_cog_load(self)
 
     @app_commands.command(name="swimify", description="swimify text")
     async def swimify_cmd(self, interaction: discord.Interaction, text: str, raw: bool = False):
