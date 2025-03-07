@@ -35,3 +35,4 @@ loadconf()
 
 ASDEBUG = conf["debug"]
 DEV = conf["dev"]
+SUBREDDIT = conf["subreddit"]
