@@ -1,21 +1,7 @@
-import os
 import re
-import asyncpraw
 
+from util.reddithelper import reddit
 from posts.post import Post, PostType
-
-reddit = asyncpraw.Reddit(
-    client_id=os.getenv("RDTCLID"),
-    client_secret=os.getenv("RDTCLSECRET"),
-    user_agent="anthroswim",
-)
-
-async def new_reddit_posts(subreddit: str, after, before):
-    sub = await reddit.subreddit(subreddit)
-    async for submission in sub.new(limit=10):
-        if submission.created_utc > after and submission.created_utc < before:
-            yield submission
-
 
 class RedditPost(Post):
     _prefix = "u/"

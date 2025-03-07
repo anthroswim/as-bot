@@ -1,4 +1,6 @@
+import os
 import discord
+import requests
 from util.const import DEV
 import re
 from discord.utils import escape_markdown
@@ -35,3 +37,13 @@ def escape_markdown_extra(text: str, unembed_liks = False) -> str:
         text = re.sub(r'<(https?://\S+)>', r'\1', text)
     
     return text
+
+
+def download(link, path, filename, **kwargs) -> str:
+    fullpath = os.path.join(path, filename)
+    with open(fullpath, "wb") as img_file:
+        content = requests.get(link, **kwargs).content
+        if len(content) == 0:
+            raise Exception("Image not found")
+        img_file.write(content)
+    return fullpath
