@@ -1,15 +1,16 @@
-from telegram import Bot, InputMediaPhoto, InputMediaVideo
+from telegram import Bot, InputMediaPhoto
 from telegram.constants import ParseMode
 import os
 import re
 
-from util.post import Post, PostType
+from util.loghelper import log
+from posts.post import Post, PostType
 
 bot = Bot(token=os.getenv("TGBOTTOKEN"))
 
 special_characters = r"[_*\[\]()~`>#+-=|{}.!]"
 
-async def telegram_post(chat_id, post: Post):
+async def telegram_send(chat_id, post: Post):
     # text
     message = f"*{escape_markdown(post._title)}*\n\n"
     if post._text:
@@ -35,7 +36,7 @@ async def telegram_post(chat_id, post: Post):
                 message += " \\(thumbnail\\)"
                 await bot.send_photo(chat_id=chat_id, photo=post._thumbnail, caption=message, parse_mode=ParseMode.MARKDOWN_V2)
             except Exception as e:
-                print(f"Fatal error sending to telegram: {e}")
+                log.error(f"Fatal error sending to telegram: {e}")
 
 
 def escape_markdown(text: str) -> str:

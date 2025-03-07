@@ -1,12 +1,8 @@
 import os
 import re
 import asyncpraw
-import requests
-import io
-import subprocess
 
-from util.filecache import FileCache
-from util.post import Post, PostType
+from posts.post import Post, PostType
 
 reddit = asyncpraw.Reddit(
     client_id=os.getenv("RDTCLID"),
@@ -28,15 +24,24 @@ class RedditPost(Post):
         # url
         self._url = submission.shortlink
 
+        # id
+        self._id = submission.id
+
         # check parent
         if hasattr(submission, "crosspost_parent"):
             self._parent = submission.crosspost_parent_list[0]
 
         # author
-        author = await reddit.redditor(submission.author.name)
-        await author.load()
-        self._author = author.name
-        self._author_icon = author.icon_img.split("?")[0]
+        if submission.author is None:
+            self._author = "[deleted]"
+            self._author_icon = None
+        else:
+            author = await reddit.redditor(submission.author.name)
+            await author.load()
+            self._author = author.name
+            self._author_icon = author.icon_img.split("?")[0]
+        
+        # platform
         self._platform = (
             "Reddit"
             if submission.subreddit_type == "user"
@@ -50,14 +55,14 @@ class RedditPost(Post):
         self._type = RedditPost.post_type(submission)
 
         if self._type is PostType.IMAGE:
-            self._media_urls.append(submission.url)
+            self._media.append(submission.url)
             self._thumbnail = submission.thumbnail
         
         elif self._type is PostType.GALLERY:
             image_dict = submission.media_metadata
             for i in image_dict:
                 pattern = r"/([^/?]+)(?:\?|$)"
-                self._media_urls.append(
+                self._media.append(
                     "https://i.redd.it/"
                     + re.search(pattern, image_dict[i]["s"]["u"]).group(1)
                 )
@@ -71,7 +76,7 @@ class RedditPost(Post):
             if video["has_audio"]:
                 video_url = "https://rxddit.com/v" + submission.permalink
 
-            self._media_urls.append(video_url)
+            self._media.append(video_url)
             self._thumbnail = submission.thumbnail
 
 
@@ -85,6 +90,8 @@ class RedditPost(Post):
         await super().fetch()
 
     async def fetch(self):
+        if self._fetched:
+            return
         # fetch
         submission = await reddit.submission(url=self._url)
         await self.generate(submission)
@@ -102,31 +109,3 @@ class RedditPost(Post):
             return PostType.TEXT
         else:
             return PostType.UNKNOWN
-        
-    def fetch_m3u8(url, postid) -> str:
-        file = f"{postid}.mp4"
-
-        # check if the file exists
-        path = FileCache.getfile(file)
-        if path:
-            return path
-        # otherwise pick the download location
-        else:
-            path = FileCache.pathjoin(file)
-        
-        # and fetch with ffmpeg
-        command = [
-            "ffmpeg",
-            "-i", url,
-            "-c", "copy",
-            "-f", "mp4",
-            "-hide_banner", "-loglevel", "error",
-            path
-        ]
-
-        process = subprocess.run(command)
-
-        if process.returncode != 0:
-            raise Exception(f"FFmpeg error, have fun debugging")
-        
-        return path
