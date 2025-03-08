@@ -6,6 +6,7 @@ import re
 from discord.utils import escape_markdown
 
 from util.loghelper import log
+from util.const import conf
 
 # return uniform embed for errors
 def errorembed(error: str):
@@ -24,8 +25,16 @@ async def devcheck(interaction: discord.Interaction):
     if interaction.user.id == DEV:
         return True
     else:
-        log.warning(f"Unauthorized access from {interaction.user.mention} {interaction.user.name}")
+        log.warning(f"Unauthorized dev access from {interaction.user.mention} {interaction.user.name}")
         await errorrespond(interaction, f"Only <@{DEV}> is allowed to use this command")
+        return False
+    
+async def modcheck(interaction: discord.Interaction):
+    if interaction.user.id in conf["mods"]:
+        return True
+    else:
+        log.warning(f"Unauthorized mod access from {interaction.user.mention} {interaction.user.name}")
+        await errorrespond(interaction, f"Only mods are allowed to use this command")
         return False
 
 
@@ -34,7 +43,7 @@ def escape_markdown_extra(text: str, unembed_liks = False) -> str:
     text = escape_markdown(text)
 
     if unembed_liks:
-        text = re.sub(r'<(https?://\S+)>', r'\1', text)
+        text = re.sub(r"<(https?://\S+)>", r"\1", text)
     
     return text
 

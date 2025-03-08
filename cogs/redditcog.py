@@ -6,14 +6,14 @@ from discord.ext import commands
 from posts.post import PostType
 from posts.supported import anypost
 from util.loghelper import log_cog_load, log
-from util.msgutil import devcheck
+from util.msgutil import devcheck, modcheck
 from util.reddithelper import reddit
 from util.const import SUBREDDIT
 import requests
 
 TMPDIR = "tmp"
 
-class RedditCog(commands.GroupCog, group_name='reddit'):
+class RedditCog(commands.GroupCog, group_name="reddit"):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.ctx_menu = app_commands.ContextMenu(
@@ -33,7 +33,7 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     @app_commands.command(name="poast", description="post to reddit")
     async def post_to_sub(self, interaction: discord.Interaction, link: str, title: str = None):
-        if not await devcheck(interaction):
+        if not await modcheck(interaction):
             return
         
         await interaction.response.defer()
