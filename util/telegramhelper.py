@@ -20,12 +20,12 @@ async def telegram_send(chat_id, post: Post):
     # media - its a mess but it works
     try:
         if post._type == PostType.IMAGE:
-            await bot.send_photo(chat_id=chat_id, photo=post._media_urls[0], caption=message, parse_mode=ParseMode.MARKDOWN_V2)
+            await bot.send_photo(chat_id=chat_id, photo=post._media[0], caption=message, parse_mode=ParseMode.MARKDOWN_V2)
         elif post._type == PostType.GALLERY:
-            media = [InputMediaPhoto(media) for media in post._media_urls]
+            media = [InputMediaPhoto(media) for media in post._media]
             await bot.send_media_group(chat_id=chat_id, media=media, caption=message, parse_mode=ParseMode.MARKDOWN_V2)
         elif post._type == PostType.VIDEO:
-            await bot.send_video(chat_id=chat_id, video=post._media_urls[0], caption=message, parse_mode=ParseMode.MARKDOWN_V2)
+            await bot.send_video(chat_id=chat_id, video=post._media[0], caption=message, parse_mode=ParseMode.MARKDOWN_V2)
         else:
             await bot.send_message(chat_id=chat_id, text=message, parse_mode=ParseMode.MARKDOWN_V2, link_preview_options={"is_disabled": True})
     
