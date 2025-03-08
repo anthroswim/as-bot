@@ -4,7 +4,7 @@ import time
 from posts.post import Post
 
 class Feed(): 
-    HEADERS = {'User-Agent': "AnthroSwim"}
+    HEADERS = {"User-Agent": "AnthroSwim"}
     
     def __init__(self, url: str):
         self.url = url

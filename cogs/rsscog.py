@@ -11,7 +11,7 @@ from util.whook import threadhook_send
 
 
 
-class RSSCog(commands.GroupCog, group_name='rss'):
+class RSSCog(commands.Cog, group_name="rss"):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.rss_parse_all.start()

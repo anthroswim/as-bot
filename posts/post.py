@@ -103,13 +103,13 @@ class Post:
         # download media
         if self._type == PostType.GALLERY:
             for i, url in enumerate(self._media):
-                ext = url.split('.')[-1].split('?')[0]
+                ext = url.split(".")[-1].split("?")[0]
                 filename = f"{self._author}_{self._id}_{i}.{ext}"
                 filename = download(url, path, filename)
                 filenames.append(filename)
         else:
             url = self._media[0]
-            ext = url.split('.')[-1].split('?')[0]
+            ext = url.split(".")[-1].split("?")[0]
             # FIXME: this is rarted
             if len(ext) > 4:
                 ext = "jpg" if self._type == PostType.IMAGE else "mp4"
