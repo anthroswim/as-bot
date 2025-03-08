@@ -32,7 +32,7 @@ class RSSCog(commands.Cog, group_name="rss"):
                 if not feed:
                     continue
                 feed.fetch_new_entries(after, before)
-                posts = reversed(feed.get_posts())
+                posts = feed.get_posts()
                 
                 for post in posts:
                     await post.fetch()
