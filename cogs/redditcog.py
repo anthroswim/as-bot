@@ -17,65 +17,77 @@ class RedditCog(commands.GroupCog, group_name='reddit'):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.ctx_menu = app_commands.ContextMenu(
-            name="Post to Reddit",
-            callback=self.post_to_sub,
+            name="post to reddit",
+            callback=self.ctx_post_to_sub,
         )
         self.bot.tree.add_command(self.ctx_menu)
         log_cog_load(self)
 
-    async def post_to_sub(self, interaction: discord.Interaction, message: discord.Message):
+
+    async def ctx_post_to_sub(self, interaction: discord.Interaction, message: discord.Message):
+        await self.post_to_sub(interaction, message.content)
+
+
+
+    @app_commands.allowed_installs(guilds=True, users=True)
+    @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+    @app_commands.command(name="poast", description="post to reddit")
+    async def post_to_sub(self, interaction: discord.Interaction, link: str, title: str = None):
         if not await devcheck(interaction):
             return
         
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
+
+        try:
+            post = anypost(link.split(" ")[0])
+            if post is None:
+                raise Exception(f"Unsupported post")
+
+            await post.fetch()
+            if not post._media:
+                raise Exception("No media found")
+            
+            sub = await reddit.subreddit(SUBREDDIT)
+
+            title_credit = f"<{post.get_username()}>"
+            title = f"{title.strip()} {title_credit}" if title else title_credit
+
+            if not os.path.exists(TMPDIR):
+                os.mkdir(TMPDIR)
+            files = post.download(TMPDIR)
+            if not files:
+                raise Exception("Failed to download media")
+
+            submission = None
+            if post._type is PostType.IMAGE:
+                submission = await sub.submit_image(
+                    title=title,
+                    image_path=files[0]
+                )
+            
+            elif post._type is PostType.VIDEO:
+                submission = await sub.submit_video(
+                    title=title,
+                    video_path=files[0],
+                    thumbnail_path="misc/as_logo_fox.png"
+                )
+            
+            elif post._type is PostType.GALLERY:
+                submission = await sub.submit_gallery(
+                    title=title,
+                    images=[{"image_path": file} for file in files]
+                )
+
+            for file in files:
+                os.remove(file)
+
+            await submission.reply(f"Art by {post.get_username()} on [{post._platform}]({post._url})\n\nCalled by {interaction.user.name}")
+
+            await interaction.followup.send(f"Posted to [r/{SUBREDDIT}](<{submission.shortlink}>)")
         
-        post = anypost(message.content.split(" ")[0])
-        if post is None:
-            await interaction.followup.send(f"Unsupported post")
-            return
-
-        await post.fetch()
-        if not post._media:
-            await interaction.followup.send(f"No media found")
-            return
-        
-        sub = await reddit.subreddit(SUBREDDIT)
-
-        title = f"<{post.get_username()}>"
-
-        if not os.path.exists(TMPDIR):
-            os.mkdir(TMPDIR)
-        files = post.download(TMPDIR)
-        if not files:
-            await interaction.followup.send(f"Failed to download media")
-            return
-
-        submission = None
-        if post._type is PostType.IMAGE:
-            submission = await sub.submit_image(
-                title=title,
-                image_path=files[0]
-            )
-        
-        elif post._type is PostType.VIDEO:
-            submission = await sub.submit_video(
-                title=title,
-                video_path=files[0],
-                thumbnail_path="misc/as_logo_fox.png"
-            )
-        
-        elif post._type is PostType.GALLERY:
-            submission = await sub.submit_gallery(
-                title=title,
-                images=[{"image_path": file} for file in files]
-            )
-
-        for file in files:
-            os.remove(file)
-
-        await submission.reply(f"Posted by {post.get_username()} on [{post._platform}]({post._url})")
-
-        await interaction.followup.send(f"Posted to [r/{SUBREDDIT}](<{submission.url}>)")
+        except Exception as e:
+            log.error(e)
+            await interaction.followup.send(f"Failed to post: `{e}`")
 
 
 async def setup(bot: commands.Bot) -> None:
