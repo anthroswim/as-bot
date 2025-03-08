@@ -1,8 +1,5 @@
 # Use an official Python runtime as the base image
-FROM python:3.12.4-slim
-
-# Install ffmpeg
-RUN apt-get -y update && apt-get -y upgrade && apt-get install -y ffmpeg
+FROM python:3.13.2-slim
 
 # Set the working directory in the container
 WORKDIR /app
