@@ -1,0 +1,24 @@
+{
+    "debug": true,
+    "dev": 954419840251199579,
+    "flairs": {
+        "gallery": "2e94e4da-d5bd-11ed-80a7-32c0e6e14448",
+        "image": "2e94e4da-d5bd-11ed-80a7-32c0e6e14448",
+        "video": "29b42714-d5bd-11ed-8ae0-ba4f896d46a3"
+    },
+    "last_sync": 0,
+    "mods": [
+        954419840251199579
+    ],
+    "rss": {
+        "https://www.reddit.com/r/anthroswim/.rss": {
+            "dc": [
+                1262844569079382027
+            ],
+            "tg": [
+                -1002242388496
+            ]
+        }
+    },
+    "subreddit": "anthroswim"
+}

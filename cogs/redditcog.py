@@ -8,7 +8,7 @@ from posts.supported import anypost
 from util.loghelper import log_cog_load, log
 from util.msgutil import modcheck
 from util.reddithelper import reddit
-from util.const import SUBREDDIT
+from util.const import SUBREDDIT, conf
 
 TMPDIR = "tmp"
 
@@ -31,6 +31,9 @@ class RedditCog(commands.GroupCog, group_name="reddit"):
     @app_commands.allowed_installs(guilds=True, users=True)
     @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
     @app_commands.command(name="poast", description="post to reddit")
+    async def cmd_post_to_sub(self, interaction: discord.Interaction, link: str, title: str = None):
+        await self.post_to_sub(interaction, link, title)
+
     async def post_to_sub(self, interaction: discord.Interaction, link: str, title: str = None):
         if not await modcheck(interaction):
             return
@@ -61,20 +64,23 @@ class RedditCog(commands.GroupCog, group_name="reddit"):
             if post._type is PostType.IMAGE:
                 submission = await sub.submit_image(
                     title=title,
-                    image_path=files[0]
+                    image_path=files[0],
+                    flair_id=conf["flairs"]["image"]
                 )
             
             elif post._type is PostType.VIDEO:
                 submission = await sub.submit_video(
                     title=title,
                     video_path=files[0],
-                    thumbnail_path="misc/as_logo_fox.png"
+                    thumbnail_path="misc/as_logo_fox.png",
+                    flair_id=conf["flairs"]["video"]
                 )
             
             elif post._type is PostType.GALLERY:
                 submission = await sub.submit_gallery(
                     title=title,
-                    images=[{"image_path": file} for file in files]
+                    images=[{"image_path": file} for file in files],
+                    flair_id=conf["flairs"]["gallery"]
                 )
 
             for file in files:
