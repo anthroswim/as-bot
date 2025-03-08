@@ -6,10 +6,9 @@ from discord.ext import commands
 from posts.post import PostType
 from posts.supported import anypost
 from util.loghelper import log_cog_load, log
-from util.msgutil import devcheck, modcheck
+from util.msgutil import modcheck
 from util.reddithelper import reddit
 from util.const import SUBREDDIT
-import requests
 
 TMPDIR = "tmp"
 
