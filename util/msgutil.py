@@ -43,7 +43,7 @@ def escape_markdown_extra(text: str, unembed_liks = False) -> str:
     text = escape_markdown(text)
 
     if unembed_liks:
-        text = re.sub(r"<(https?://\S+)>", r"\1", text)
+        text = re.sub(r"(https?://\S+)", r"<\1>", text)
     
     return text
 
