@@ -43,16 +43,29 @@ def escape_markdown_extra(text: str, unembed_liks = False) -> str:
     text = escape_markdown(text)
 
     if unembed_liks:
-        text = re.sub(r"(https?://\S+)", r"<\1>", text)
+        text = unembed_links(text)
     
     return text
 
+def unembed_links(text: str) -> str:
+    # replace [link](link) with link
+    text = re.sub(r"\[https?://[^\s\)\]]+\]\((https?://[^\s\)\]]+)\)", r"\1", text)
 
-def download(link, path, filename, **kwargs) -> str:
-    fullpath = os.path.join(path, filename)
-    with open(fullpath, "wb") as img_file:
-        content = requests.get(link, **kwargs).content
-        if len(content) == 0:
-            raise Exception("Image not found")
-        img_file.write(content)
-    return fullpath
+    # replace normal links with <link>
+    text = re.sub(r"(?<!(\]\())(https?://[^\s\)\]]+)", r"<\2>", text)
+    
+    # replace markdown links with [](<link>)
+    text = re.sub(r"\[([^\]]+)\]\((https?://[^\)]+)\)", r"[\1](<\2>)", text)
+    return text
+
+# this is utterly stupid
+def truncate(text: str, max_length: int, placeholder: str = "...") -> str:
+    if max_length <= 0:
+        return ""
+    if not text:
+        return ""
+    if len(text) <= max_length:
+        return text
+    
+    max_length -= len(placeholder)
+    return " ".join(text[:max_length].split(" ")[:-1]) + placeholder

@@ -1,20 +1,22 @@
 from enum import Enum
 
-from util.msgutil import download, escape_markdown_extra
+from util.msgutil import escape_markdown_extra, unembed_links, truncate
+
 
 class PostType(Enum):
+    UNKNOWN = 0
     TEXT = 1
     IMAGE = 2
     GALLERY = 3
     VIDEO = 4
     POLL = 5
-    UNKNOWN = 6
 
 
 class Post:
     # TODO: should revrite prolly
     _prefix = ""
     _platform = "unknown"
+    _max_characters = 2000
 
     def __init__(self, url: str):
         # common
@@ -60,67 +62,56 @@ class Post:
             raise Exception("The post was not fetched")
         
         escape_embed_links = self._type in [PostType.IMAGE, PostType.VIDEO, PostType.GALLERY]
-        allow_markdown_in_body = self._type in [PostType.TEXT, PostType.POLL]
         
-        # title
-        if self._title:
-            message = f"**{escape_markdown_extra(self._title, escape_embed_links)}**\n\n"
-        else:
-            message = ""
+        title = self.get_md_title(escape_embed_links)
+        body = self.get_md_body(escape_embed_links)
+        footer = self.get_md_footer(include_author)
+        footer_media = self.get_md_footer_media()
 
+        linebreaks = 3
+        length = len(title) + len(footer) + linebreaks
+
+        footer_media = truncate(footer_media, self._max_characters - length)
+        length += len(footer_media)
+        body = truncate(body, self._max_characters - length)
+
+        if title and body:
+            return (title + "\n\n" + body + "\n" + footer + footer_media).strip()
+        else:
+            return (title + body + "\n" + footer + footer_media).strip()
+    
+    def get_md_title(self, escape_embed_links) -> str:
+        if self._title:
+            return f"**{escape_markdown_extra(self._title, escape_embed_links)}**"
+
+        return ""
+
+    def get_md_body(self, escape_embed_links) -> str:
+        body = ""
+        
         # text
         if self._text:
-            message += f"{self._text if allow_markdown_in_body else escape_markdown_extra(self._text, escape_embed_links)}\n"
-            if not self._title:
-                message += "\n"
+            body += f"{unembed_links(self._text) if escape_embed_links else self._text}"
 
         # poll
-        for option in self._poll_options:
-            message += f"- {option}\n"
+        body += "\n".join(f"- {i}" for i in self._poll_options)
 
-        # footer
-        message += f"-# Posted "
+        return body
+
+    def get_md_footer(self, include_author) -> str:
+        footer = f"-# Posted "
         if include_author:
-            message += f"by {self._prefix}{escape_markdown_extra(self._author)} "
-        message += f"on [{self._platform}](<{self._url}>) "
+            footer += f"by {self._prefix}{escape_markdown_extra(self._author)} "
+        footer += f"on [{self._platform}](<{self._url}>) "
 
-        # media
+        return footer
+
+    def get_md_footer_media(self) -> str:
+        media_links = ""
         if self._type in [PostType.IMAGE, PostType.VIDEO]:
-            message += f"[.]({self._media[0]})"
+            media_links += f"[.]({self._media[0]})"
         elif self._type == PostType.GALLERY:
             for url in self._media:
-                message += f"[.]({url}) "
-
-        if len(message) > 2000:
-            message = " ".join(message[:1997].split(" ")[:-1]) + "..." # profound mental retardation
-        return message
+                media_links += f"[.]({url}) "
         
-    def download(self, path: str) -> list[str]:
-        if not self._fetched:
-            raise Exception("The post was not fetched")
-        if self._type not in [PostType.IMAGE, PostType.VIDEO, PostType.GALLERY]:
-            raise Exception("This post is not downloadable")
-        
-        filenames = []
-
-        # download media
-        if self._type == PostType.GALLERY:
-            for i, url in enumerate(self._media):
-                ext = url.split(".")[-1].split("?")[0]
-                filename = f"{self._author}_{self._id}_{i}.{ext}"
-                filename = download(url, path, filename)
-                filenames.append(filename)
-        else:
-            url = self._media[0]
-            ext = url.split(".")[-1].split("?")[0]
-            # FIXME: this is rarted
-            if len(ext) > 4:
-                ext = "jpg" if self._type == PostType.IMAGE else "mp4"
-            filename = f"{self._author}_{self._id}.{ext}"
-            filename = download(url, path, filename)
-            filenames.append(filename)
-
-        return filenames
-
-        
-    
+        return media_links
