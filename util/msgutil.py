@@ -37,6 +37,14 @@ async def modcheck(interaction: discord.Interaction):
         await errorrespond(interaction, f"Only mods are allowed to use this command")
         return False
 
+def download(link, path, filename, **kwargs) -> str:
+    fullpath = os.path.join(path, filename)
+    with open(fullpath, "wb") as img_file:
+        content = requests.get(link, **kwargs).content
+        if len(content) == 0:
+            raise Exception("Image not found")
+        img_file.write(content)
+    return fullpath
 
 def escape_markdown_extra(text: str, unembed_liks = False) -> str:
     # TODO: test order of operations

@@ -1,6 +1,6 @@
 from enum import Enum
 
-from util.msgutil import escape_markdown_extra, unembed_links, truncate
+from util.msgutil import escape_markdown_extra, unembed_links, truncate, download
 
 
 class PostType(Enum):
@@ -115,3 +115,30 @@ class Post:
                 media_links += f"[.]({url}) "
         
         return media_links
+
+    def download(self, path: str) -> list[str]:
+        if not self._fetched:
+            raise Exception("The post was not fetched")
+        if self._type not in [PostType.IMAGE, PostType.VIDEO, PostType.GALLERY]:
+            raise Exception("This post is not downloadable")
+        
+        filenames = []
+
+        # download media
+        if self._type == PostType.GALLERY:
+            for i, url in enumerate(self._media):
+                ext = url.split(".")[-1].split("?")[0]
+                filename = f"{self._author}_{self._id}_{i}.{ext}"
+                filename = download(url, path, filename)
+                filenames.append(filename)
+        else:
+            url = self._media[0]
+            ext = url.split(".")[-1].split("?")[0]
+            # FIXME: this is rarted
+            if len(ext) > 4:
+                ext = "jpg" if self._type == PostType.IMAGE else "mp4"
+            filename = f"{self._author}_{self._id}.{ext}"
+            filename = download(url, path, filename)
+            filenames.append(filename)
+
+        return filenames
