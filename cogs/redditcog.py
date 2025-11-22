@@ -86,7 +86,7 @@ class RedditCog(commands.GroupCog, group_name="reddit"):
             for file in files:
                 os.remove(file)
 
-            await submission.reply(f"Art by {post.get_username()} on [{post._platform}]({post._url})\n\nCalled by {interaction.user.name}")
+            await submission.reply(f"Source: {post.get_username()}, [{post._platform}]({post._url})")
 
             await interaction.followup.send(f"Posted to [r/{SUBREDDIT}](<{submission.shortlink}>)")
         
