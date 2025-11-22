@@ -16,3 +16,4 @@ venv.bak/
 logs/
 conf.json
 tmp/
+*.rss
