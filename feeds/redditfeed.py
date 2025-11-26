@@ -17,23 +17,33 @@ class RedditFeed(Feed):
         if not self.feed:
             self.fetch_feed()
 
-        def write_prev_file():
-            with open(prev_path, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(map(lambda entry: entry.link, self.feed.entries)))
+        # save the last few links to a file
+        def write_prev_file(fname, links):
+            with open(fname, "w", encoding="utf-8") as f:
+                f.write("\n".join(links[:128]))
 
-        file_name = re.sub(r'[^a-zA-Z0-9]', '_', self.url)
-        prev_path = os.path.join(os.getcwd(), file_name + '.rss')
-        
+        # get the path for the feed
+        file_name = re.sub(r"[^a-zA-Z0-9]", "_", self.url)
+        prev_path = os.path.join(os.getcwd(), file_name + ".rss")
+        entry_links = map(lambda entry: entry.link, self.feed.entries)
+
+        # create previous file if its missing
         if not os.path.exists(prev_path):
-            write_prev_file()
+            write_prev_file(prev_path, entry_links)
             log.info(f"Created previous feed file at {prev_path}")
             return
-
+        
+        # read previous entries
         prev_entries = []
-        with open(prev_path, 'r', encoding='utf-8') as f:
+        with open(prev_path, "r", encoding="utf-8") as f:
             prev_entries = list(map(lambda line: line.strip(), f.readlines()))
-        write_prev_file()
 
+        # combine current and previous entries
+        entry_links = list(entry_links) + prev_entries
+        entry_links = list(dict.fromkeys(entry_links))
+        write_prev_file(prev_path, entry_links)
+
+        # filter new entries
         self.entries = filter(lambda entry: entry.link not in prev_entries, self.feed.entries)
         self.entries = sorted(self.entries, key=lambda entry: calendar.timegm(entry.published_parsed))
 
