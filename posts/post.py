@@ -27,6 +27,7 @@ class Post:
         self._title = None
         self._type = None
         self._id = None
+        self._spoiler = False
         # date maybe?
         
         self._fetched = False
@@ -106,13 +107,17 @@ class Post:
 
         return footer
 
+    def get_md_footer_link(self, link: str, display: str = ".") -> str:
+        # that space before the spoiler end is very much needed
+        return f"[{display}]({link})" if not self._spoiler else f"||[{display}]({link}) ||"
+
     def get_md_footer_media(self) -> str:
         media_links = ""
         if self._type in [PostType.IMAGE, PostType.VIDEO]:
-            media_links += f"[.]({self._media[0]})"
+            media_links += self.get_md_footer_link(self._media[0])
         elif self._type == PostType.GALLERY:
             for url in self._media:
-                media_links += f"[.]({url}) "
+                media_links += self.get_md_footer_link(url) + " "
         
         return media_links
 

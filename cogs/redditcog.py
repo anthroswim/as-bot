@@ -6,9 +6,10 @@ from discord.ext import commands
 from posts.post import PostType
 from posts.supported import anypost
 from util.loghelper import log_cog_load, log
-from util.msgutil import modcheck
+from util.msgutil import modcheck, devcheck
 from util.reddithelper import reddit
 from util.const import SUBREDDIT, conf
+from util.whook import threadhook_send
 
 TMPDIR = "tmp"
 
@@ -93,6 +94,24 @@ class RedditCog(commands.GroupCog, group_name="reddit"):
         except Exception as e:
             log.error(e)
             await interaction.followup.send(f"Failed to post: `{e}`")
+
+    @app_commands.command(name="embed", description="embed a poast for debugging")
+    async def embed_post(self, interaction: discord.Interaction, link: str):
+        if not await devcheck(interaction):
+            return
+        await interaction.response.defer(ephemeral=True)
+        try:
+            post = anypost(link.split(" ")[0])
+            if post is None:
+                raise Exception(f"Unsupported post")
+            
+            await post.fetch()
+            await threadhook_send(interaction.channel, self.bot, post.get_message(), post.get_username(), post.get_avatar())
+            
+            await interaction.followup.send("Done", ephemeral=True)
+        except Exception as e:
+            log.error(e)
+            await interaction.followup.send(f"Failed to embed: `{e}`", ephemeral=True)
 
 
 async def setup(bot: commands.Bot) -> None:

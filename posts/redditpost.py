@@ -37,6 +37,9 @@ class RedditPost(Post):
         # title
         self._title = submission.title
 
+        # spoiler
+        self._spoiler = submission.spoiler
+
         # type
         self._type = RedditPost.post_type(submission)
 
