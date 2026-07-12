@@ -28,6 +28,7 @@ class Post:
         self._type = None
         self._id = None
         self._spoiler = False
+        self._sensitive = False
         # date maybe?
         
         self._fetched = False
@@ -109,7 +110,7 @@ class Post:
 
     def get_md_footer_link(self, link: str, display: str = ".") -> str:
         # that space before the spoiler end is very much needed
-        return f"[{display}]({link})" if not self._spoiler else f"||[{display}]({link}) ||"
+        return f"[{display}]({link})" if not (self._spoiler or self._sensitive) else f"||[{display}]({link}) ||"
 
     def get_md_footer_media(self) -> str:
         media_links = ""

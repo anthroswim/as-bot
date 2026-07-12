@@ -25,7 +25,7 @@ class RedditPost(Post):
             author = await reddit.redditor(submission.author.name)
             await author.load()
             self._author = author.name
-            self._author_icon = author.icon_img.split("?")[0]
+            self._author_icon = author.icon_img.split("?")[0] if hasattr(author, "icon_img") else None
         
         # platform
         self._platform = (
@@ -40,6 +40,9 @@ class RedditPost(Post):
         # spoiler
         self._spoiler = submission.spoiler
 
+        # sensitive
+        self._sensitive = submission.over_18
+
         # type
         self._type = RedditPost.post_type(submission)
 
@@ -50,15 +53,12 @@ class RedditPost(Post):
             self._thumbnail = submission.thumbnail
         
         elif self._type is PostType.GALLERY:
-            image_dict = submission.media_metadata
-            for i in image_dict:
-                pattern = r"/([^/?]+)(?:\?|$)"
-                self._media.append(
-                    "https://i.redd.it/"
-                    + image_dict[i]["id"] 
-                    + "."
-                    + image_dict[i]["m"].split("/")[-1]
-                )
+            gallery_data = submission.gallery_data["items"]
+            meta_data = submission.media_metadata
+            for i in gallery_data:
+                media_id = i["media_id"]
+                ext = meta_data[media_id]["m"].split("/")[-1]
+                self._media.append(f"https://i.redd.it/{media_id}.{ext}")
             self._thumbnail = submission.thumbnail
 
         elif self._type is PostType.VIDEO:
