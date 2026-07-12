@@ -2,6 +2,8 @@ import os
 import discord
 from discord import app_commands
 from discord.ext import commands
+import asyncpraw
+from asyncpraw.models import PostMedia
 
 from posts.post import PostType
 from posts.supported import anypost
@@ -50,7 +52,7 @@ class RedditCog(commands.GroupCog, group_name="reddit"):
             if not post._media:
                 raise Exception("No media found")
             
-            sub = await reddit.subreddit(SUBREDDIT)
+            sub = await reddit.subreddit(SUBREDDIT, fetch=True)
 
             title_credit = f"<{post.get_username()}>"
             title = f"{title.strip()} {title_credit}" if title else title_credit
@@ -61,33 +63,38 @@ class RedditCog(commands.GroupCog, group_name="reddit"):
             if not files:
                 raise Exception("Failed to download media")
 
+            post_body = f"Source: {post.get_username()}, [{post._platform}]({post._url})"
+
             submission = None
             if post._type is PostType.IMAGE:
-                submission = await sub.submit_image(
+                submission = await sub.submit(
                     title=title,
-                    image_path=files[0],
+                    selftext=post_body,
+                    image=PostMedia(files[0]),
                     flair_id=conf["flairs"]["image"]
                 )
             
             elif post._type is PostType.VIDEO:
-                submission = await sub.submit_video(
+                submission = await sub.submit(
                     title=title,
-                    video_path=files[0],
-                    thumbnail_path="misc/as_logo_fox.png",
+                    selftext=post_body,
+                    video={
+                        "media": PostMedia(files[0]),
+                        "thumbnail": PostMedia("misc/as_logo_fox.png")
+                    },
                     flair_id=conf["flairs"]["video"]
                 )
             
             elif post._type is PostType.GALLERY:
-                submission = await sub.submit_gallery(
+                submission = await sub.submit(
                     title=title,
-                    images=[{"image_path": file} for file in files],
+                    selftext=post_body,
+                    gallery=[PostMedia(f) for f in files],
                     flair_id=conf["flairs"]["gallery"]
                 )
 
             for file in files:
                 os.remove(file)
-
-            await submission.reply(f"Source: {post.get_username()}, [{post._platform}]({post._url})")
 
             await interaction.followup.send(f"Posted to [r/{SUBREDDIT}](<{submission.shortlink}>)")
         
